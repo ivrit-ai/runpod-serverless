@@ -12,6 +12,19 @@ It is part of the [ivrit.ai](https://ivrit.ai) non-profit project.
 - `Dockerfile`: Used to create the Docker image for the serverless function.
 - `infer.py`: The main script that handles the transcription process, placed inside the Docker image.
 
+## Setting up your inference endpoint
+
+1. Log in to [runpod.io]
+2. Choose Menu->Serverless
+3. Choose New Endpoint
+4. Select the desired worker configuration.
+   - You can choose the cheapest worker (16GB GPU, $0.00016/second as of August 1st, 2024).
+   - Active workers can be 0, max workers is 1 or more.
+   - GPUs/worker should be set to 1.
+   - Container image should be set to **yairlifshitz/fw-v2-d3-e3:v0.34**, or your own Docker image (instruction later on how to build this).
+   - Container disk should have at least 20 GB.
+5. Click Deploy.
+
 ## Building your own Docker image
 
 1. Clone this repository:
@@ -50,7 +63,20 @@ d. Push the image to Docker Hub:
 
 ## Usage
 
-Once deployed on runpod.io, you can send Hebrew audio files to the serverless function for transcription. The exact usage will depend on your specific implementation in `infer.py`.
+Once deployed on runpod.io, you can transcribe Hebrew audio as follows:
+
+```
+import runpod
+import base64
+
+mp3_data = open('<file>.mp3', 'rb').read()
+data = base64.b64encode(mp3_data).decode('utf-8')
+payload = { 'data' : data }
+
+runpod.api_key = '<Your runpod.io API key>'
+ep = runpod.Endpoint("<endpoint key>")
+res = ep.run_sync({'data' : data})
+```
 
 ## Contributing
 
