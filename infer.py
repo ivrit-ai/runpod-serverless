@@ -4,37 +4,107 @@ import base64
 import faster_whisper
 import tempfile
 
+import torch
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 model_name = 'ivrit-ai/faster-whisper-v2-d3-e3'
-model = faster_whisper.WhisperModel(model_name, device='cuda')
+model = faster_whisper.WhisperModel(model_name, device=device)
+
+import requests
+
+# Maximum data size: 200MB
+MAX_PAYLOAD_SIZE = 200 * 1024 * 1024
+
+def download_file(url, max_size_bytes, output_filename):
+    """
+    Download a file from a given URL with size limit.
+
+    Args:
+    url (str): The URL of the file to download.
+    max_size_bytes (int): Maximum allowed file size in bytes.
+    output_filename (str): The name of the file to save the download as.
+
+    Returns:
+    bool: True if download was successful, False otherwise.
+    """
+    try:
+        # Send a GET request
+        response = requests.get(url, stream=True)
+        response.raise_for_status()  # Raises an HTTPError for bad requests
+
+        # Get the file size if possible
+        file_size = int(response.headers.get('Content-Length', 0))
+        
+        if file_size > max_size_bytes:
+            print(f"File size ({file_size} bytes) exceeds the maximum allowed size ({max_size_bytes} bytes).")
+            return False
+
+        # Download and write the file
+        downloaded_size = 0
+        with open(output_filename, 'wb') as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                downloaded_size += len(chunk)
+                if downloaded_size > max_size_bytes:
+                    print(f"Download stopped: Size limit exceeded ({max_size_bytes} bytes).")
+                    return False
+                file.write(chunk)
+
+        print(f"File downloaded successfully: {output_filename}")
+        return True
+
+    except requests.RequestException as e:
+        print(f"Error downloading file: {e}")
+        return False
+
+# Example usage
+# url = "https://example.com/file.zip"
+# filename = "downloaded_file.zip"
+# success = download_file(url, max_size, filename)
 
 
 def transcribe(job):
-    print(job.keys())
-    print(job)
+    datatype = job['input'].get('type', None)
+    if not datatype:
+        return { "error" : "datatype field not provided. Should be 'blob' or 'url'." }
 
-    result = process_task(job['input']['data'])
+    if not datatype in ['blob', 'url']:
+        return { "error" : f"datatype should be 'blob' or 'url', but is {datatype} instead." }
 
-    return { 'text' : job, 'result' : result }
+    with tempfile.TemporaryDirectory() as d:
+        audio_file = f'{d}/audio.mp3'
 
-def process_task(data):
+        if datatype == 'blob':
+            mp3_bytes = base64.b64decode(job['input']['data'])
+            open(audio_file, 'wb').write(mp3_bytes) 
+        elif datatype == 'url':
+            success = download_file(job['input']['url'], MAX_PAYLOAD_SIZE, audio_file)
+            if not success:
+                return { "error" : f"Error downloading data from {job['input']['url']}" }
+        
+        result = transcribe_core(audio_file)
+        return { 'text' : job, 'result' : result }
+
+def transcribe_core(audio_file):
     print('Transcribing...')
 
     # Implement your task processing logic here
     # For example, execute Python code based on task_type and data
     # Decode the base64-encoded MP3 data
-    with tempfile.TemporaryDirectory() as d:
-        mp3_bytes = base64.b64decode(data)
-        open(f'{d}/audio.mp3', 'wb').write(mp3_bytes)
+    ret = { 'segments' : [] }
 
-        ret = { 'segments' : [] }
+    segs, dummy = model.transcribe(audio_file, language='he', word_timestamps=True)
+    for s in segs:
+        words = []
+        for w in s.words:
+            words.append( { 'start' : w.start, 'end' : w.end, 'word' : w.word, 'probability' : w.probability } )
 
-        segs, dummy = model.transcribe(f'{d}/audio.mp3', language='he')
-        for s in segs:
-            print(s)
-            seg = { 'id' : s.id, 'seek' : s.seek, 'start' : s.start, 'end' : s.end, 'text' : s.text, 'avg_logprob' : s.avg_logprob, 'compression_ratio' : s.compression_ratio, 'no_speech_prob' : s.no_speech_prob }
-            ret['segments'].append(seg)
+        seg = { 'id' : s.id, 'seek' : s.seek, 'start' : s.start, 'end' : s.end, 'text' : s.text, 'avg_logprob' : s.avg_logprob, 'compression_ratio' : s.compression_ratio, 'no_speech_prob' : s.no_speech_prob, 'words' : words }
 
-        return ret
+        print(seg)
+        ret['segments'].append(seg)
+
+    return ret
 
 runpod.serverless.start({"handler": transcribe})
 
