@@ -71,12 +71,11 @@ Once deployed on runpod.io, you can transcribe Hebrew audio either by providing 
 import runpod
 import base64
 
-
 payload = { 'type' : 'url', 'url' : 'https://your-audio-url' }
 
 runpod.api_key = '<Your runpod.io API key>'
 ep = runpod.Endpoint("<endpoint key>")
-res = ep.run_sync({'data' : data})
+res = ep.run_sync(payload)
 ```
 
 ### File upload
@@ -87,11 +86,11 @@ import base64
 
 mp3_data = open('<file>.mp3', 'rb').read()
 data = base64.b64encode(mp3_data).decode('utf-8')
-payload = { 'type' : 'blob, 'data' : data }
+payload = { 'type' : 'blob', 'data' : data }
 
 runpod.api_key = '<Your runpod.io API key>'
 ep = runpod.Endpoint("<endpoint key>")
-res = ep.run_sync({'data' : data})
+res = ep.run_sync(payload)
 ```
 
 ## Contributing
