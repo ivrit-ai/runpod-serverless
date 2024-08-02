@@ -63,7 +63,23 @@ d. Push the image to Docker Hub:
 
 ## Usage
 
-Once deployed on runpod.io, you can transcribe Hebrew audio as follows:
+Once deployed on runpod.io, you can transcribe Hebrew audio either by providing a URL to transcribe (up to 200MB), or by uploading a file (up to 10MB).
+
+### URL-based transcription
+
+```
+import runpod
+import base64
+
+
+payload = { 'type' : 'url', 'url' : 'https://your-audio-url' }
+
+runpod.api_key = '<Your runpod.io API key>'
+ep = runpod.Endpoint("<endpoint key>")
+res = ep.run_sync({'data' : data})
+```
+
+### File upload
 
 ```
 import runpod
@@ -71,7 +87,7 @@ import base64
 
 mp3_data = open('<file>.mp3', 'rb').read()
 data = base64.b64encode(mp3_data).decode('utf-8')
-payload = { 'data' : data }
+payload = { 'type' : 'blob, 'data' : data }
 
 runpod.api_key = '<Your runpod.io API key>'
 ep = runpod.Endpoint("<endpoint key>")
