@@ -2,6 +2,9 @@
 
 A template for transcribing Hebrew audio using runpod.io serverless infrastructure.
 
+Note: if you register at [runpod.io], we'd like to ask you to consider using our [referral link](https://runpod.io/?ref=06octndf).
+It provides us with more credits, which we can then use to provide better services.
+
 ## Description
 
 This project provides a serverless solution for transcribing Hebrew audio files. It leverages runpod.io's infrastructure to process audio files efficiently and return transcriptions.
