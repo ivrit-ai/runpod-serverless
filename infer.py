@@ -16,21 +16,27 @@ import requests
 # Maximum data size: 200MB
 MAX_PAYLOAD_SIZE = 200 * 1024 * 1024
 
-def download_file(url, max_size_bytes, output_filename):
+def download_file(url, max_size_bytes, output_filename, api_key=None):
     """
-    Download a file from a given URL with size limit.
+    Download a file from a given URL with size limit and optional API key.
 
     Args:
     url (str): The URL of the file to download.
     max_size_bytes (int): Maximum allowed file size in bytes.
     output_filename (str): The name of the file to save the download as.
+    api_key (str, optional): API key to be used as a bearer token.
 
     Returns:
     bool: True if download was successful, False otherwise.
     """
     try:
+        # Prepare headers
+        headers = {}
+        if api_key:
+            headers['Authorization'] = f'Bearer {api_key}'
+
         # Send a GET request
-        response = requests.get(url, stream=True)
+        response = requests.get(url, stream=True, headers=headers)
         response.raise_for_status()  # Raises an HTTPError for bad requests
 
         # Get the file size if possible
@@ -57,12 +63,6 @@ def download_file(url, max_size_bytes, output_filename):
         print(f"Error downloading file: {e}")
         return False
 
-# Example usage
-# url = "https://example.com/file.zip"
-# filename = "downloaded_file.zip"
-# success = download_file(url, max_size, filename)
-
-
 def transcribe(job):
     datatype = job['input'].get('type', None)
     if not datatype:
@@ -71,6 +71,9 @@ def transcribe(job):
     if not datatype in ['blob', 'url']:
         return { "error" : f"datatype should be 'blob' or 'url', but is {datatype} instead." }
 
+    # Get the API key from the job input
+    api_key = job['input'].get('api_key', None)
+
     with tempfile.TemporaryDirectory() as d:
         audio_file = f'{d}/audio.mp3'
 
@@ -78,7 +81,7 @@ def transcribe(job):
             mp3_bytes = base64.b64decode(job['input']['data'])
             open(audio_file, 'wb').write(mp3_bytes) 
         elif datatype == 'url':
-            success = download_file(job['input']['url'], MAX_PAYLOAD_SIZE, audio_file)
+            success = download_file(job['input']['url'], MAX_PAYLOAD_SIZE, audio_file, api_key)
             if not success:
                 return { "error" : f"Error downloading data from {job['input']['url']}" }
         
@@ -88,9 +91,6 @@ def transcribe(job):
 def transcribe_core(audio_file):
     print('Transcribing...')
 
-    # Implement your task processing logic here
-    # For example, execute Python code based on task_type and data
-    # Decode the base64-encoded MP3 data
     ret = { 'segments' : [] }
 
     segs, dummy = model.transcribe(audio_file, language='he', word_timestamps=True)
@@ -107,4 +107,3 @@ def transcribe_core(audio_file):
     return ret
 
 runpod.serverless.start({"handler": transcribe})
-
