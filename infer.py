@@ -86,7 +86,7 @@ def transcribe(job):
                 return { "error" : f"Error downloading data from {job['input']['url']}" }
         
         result = transcribe_core(audio_file)
-        return { 'text' : job, 'result' : result }
+        return { 'result' : result }
 
 def transcribe_core(audio_file):
     print('Transcribing...')
