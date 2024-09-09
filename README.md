@@ -24,7 +24,7 @@ It is part of the [ivrit.ai](https://ivrit.ai) non-profit project.
    - You can choose the cheapest worker (16GB GPU, $0.00016/second as of August 1st, 2024).
    - Active workers can be 0, max workers is 1 or more.
    - GPUs/worker should be set to 1.
-   - Container image should be set to **yairlifshitz/fw-v2-d3-e3:v0.34**, or your own Docker image (instruction later on how to build this).
+   - Container image should be set to **yairlifshitz/faster-whisper-v2-d4:v1.0**, or your own Docker image (instruction later on how to build this).
    - Container disk should have at least 20 GB.
 5. Click Deploy.
 
