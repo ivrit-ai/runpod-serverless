@@ -8,7 +8,7 @@ import torch
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-model_name = 'ivrit-ai/faster-whisper-v2-d3-e3'
+model_name = 'ivrit-ai/faster-whisper-v2-d4'
 model = faster_whisper.WhisperModel(model_name, device=device)
 
 import requests
