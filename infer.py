@@ -8,9 +8,6 @@ import torch
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-model_name = 'ivrit-ai/faster-whisper-v2-d4'
-model = faster_whisper.WhisperModel(model_name, device=device)
-
 import requests
 
 # Maximum data size: 200MB
@@ -65,6 +62,7 @@ def download_file(url, max_size_bytes, output_filename, api_key=None):
 
 def transcribe(job):
     datatype = job['input'].get('type', None)
+    model_name = job['input'].get('model', 'large-v2')
     if not datatype:
         return { "error" : "datatype field not provided. Should be 'blob' or 'url'." }
 
@@ -73,6 +71,8 @@ def transcribe(job):
 
     # Get the API key from the job input
     api_key = job['input'].get('api_key', None)
+
+    model = faster_whisper.WhisperModel(model_name, device=device)
 
     with tempfile.TemporaryDirectory() as d:
         audio_file = f'{d}/audio.mp3'
@@ -85,10 +85,10 @@ def transcribe(job):
             if not success:
                 return { "error" : f"Error downloading data from {job['input']['url']}" }
         
-        result = transcribe_core(audio_file)
+        result = transcribe_core(model, audio_file)
         return { 'result' : result }
 
-def transcribe_core(audio_file):
+def transcribe_core(model, audio_file):
     print('Transcribing...')
 
     ret = { 'segments' : [] }

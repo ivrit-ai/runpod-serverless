@@ -74,7 +74,8 @@ Once deployed on runpod.io, you can transcribe Hebrew audio either by providing 
 import runpod
 import base64
 
-payload = { 'type' : 'url', 'url' : 'https://your-audio-url' }
+# model can be any of ivrit-ai/faster-whisper-v2-d4, large-v2, large-v3
+payload = { 'type' : 'url', 'url' : 'https://your-audio-url', 'model' : 'ivrit-ai/faster-whisper-v2-d4' }
 
 runpod.api_key = '<Your runpod.io API key>'
 ep = runpod.Endpoint("<endpoint key>")
@@ -89,7 +90,9 @@ import base64
 
 mp3_data = open('<file>.mp3', 'rb').read()
 data = base64.b64encode(mp3_data).decode('utf-8')
-payload = { 'type' : 'blob', 'data' : data }
+
+# model can be any of ivrit-ai/faster-whisper-v2-d4, large-v2, large-v3
+payload = { 'type' : 'blob', 'data' : data, model : 'ivrit-ai/faster-whisper-v2-d4' }
 
 runpod.api_key = '<Your runpod.io API key>'
 ep = runpod.Endpoint("<endpoint key>")
