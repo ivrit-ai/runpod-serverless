@@ -76,24 +76,25 @@ def transcribe(job):
 
     model = faster_whisper.WhisperModel(model_name, device=device)
 
-    with tempfile.TemporaryDirectory() as d:
-        audio_file = f'{d}/audio.mp3'
+    d = tempfile.mkdtemp()
 
-        if datatype == 'blob':
-            mp3_bytes = base64.b64decode(job['input']['data'])
-            open(audio_file, 'wb').write(mp3_bytes) 
-        elif datatype == 'url':
-            success = download_file(job['input']['url'], MAX_PAYLOAD_SIZE, audio_file, api_key)
-            if not success:
-                return { "error" : f"Error downloading data from {job['input']['url']}" }
+    audio_file = f'{d}/audio.mp3'
 
-        stream_gen = transcribe_core(model, audio_file)
+    if datatype == 'blob':
+        mp3_bytes = base64.b64decode(job['input']['data'])
+        open(audio_file, 'wb').write(mp3_bytes) 
+    elif datatype == 'url':
+        success = download_file(job['input']['url'], MAX_PAYLOAD_SIZE, audio_file, api_key)
+        if not success:
+            return { "error" : f"Error downloading data from {job['input']['url']}" }
 
-        if is_streaming:
-            return stream_gen
+    stream_gen = transcribe_core(model, audio_file)
 
-        result = [entry for entry in stream_gen]
-        return { 'result' : result }
+    if is_streaming:
+        return stream_gen 
+
+    result = [entry for entry in stream_gen]
+    return { 'result' : result }
 
 def transcribe_core(model, audio_file):
     print('Transcribing...')
