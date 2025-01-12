@@ -1,1 +1,1 @@
-{ "input" : { "type" : "url", "url" : "https://github.com/metaldaniel/HebrewASR-Comparison/raw/main/HaTankistiot_n12-mp3.mp3" } }
+{ "input" : { "type" : "url", "url" : "https://github.com/metaldaniel/HebrewASR-Comparison/raw/main/HaTankistiot_n12-mp3.mp3", "streaming": false } }

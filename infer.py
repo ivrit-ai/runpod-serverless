@@ -63,6 +63,8 @@ def download_file(url, max_size_bytes, output_filename, api_key=None):
 def transcribe(job):
     datatype = job['input'].get('type', None)
     model_name = job['input'].get('model', 'large-v2')
+    is_streaming = job['input'].get('streaming', False)
+
     if not datatype:
         return { "error" : "datatype field not provided. Should be 'blob' or 'url'." }
 
@@ -84,8 +86,13 @@ def transcribe(job):
             success = download_file(job['input']['url'], MAX_PAYLOAD_SIZE, audio_file, api_key)
             if not success:
                 return { "error" : f"Error downloading data from {job['input']['url']}" }
-        
-        result = transcribe_core(model, audio_file)
+
+        stream_gen = transcribe_core(model, audio_file)
+
+        if is_streaming:
+            return stream_gen
+
+        result = [entry for entry in stream_gen]
         return { 'result' : result }
 
 def transcribe_core(model, audio_file):
@@ -101,9 +108,7 @@ def transcribe_core(model, audio_file):
 
         seg = { 'id' : s.id, 'seek' : s.seek, 'start' : s.start, 'end' : s.end, 'text' : s.text, 'avg_logprob' : s.avg_logprob, 'compression_ratio' : s.compression_ratio, 'no_speech_prob' : s.no_speech_prob, 'words' : words }
 
-        print(seg)
-        ret['segments'].append(seg)
+        yield seg
 
-    return ret
+runpod.serverless.start({"handler": transcribe, "return_aggregate_stream": True})
 
-runpod.serverless.start({"handler": transcribe})
