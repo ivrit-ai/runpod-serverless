@@ -66,10 +66,10 @@ def transcribe(job):
     is_streaming = job['input'].get('streaming', False)
 
     if not datatype:
-        return { "error" : "datatype field not provided. Should be 'blob' or 'url'." }
+        yield { "error" : "datatype field not provided. Should be 'blob' or 'url'." }
 
     if not datatype in ['blob', 'url']:
-        return { "error" : f"datatype should be 'blob' or 'url', but is {datatype} instead." }
+        yield { "error" : f"datatype should be 'blob' or 'url', but is {datatype} instead." }
 
     # Get the API key from the job input
     api_key = job['input'].get('api_key', None)
@@ -86,15 +86,17 @@ def transcribe(job):
     elif datatype == 'url':
         success = download_file(job['input']['url'], MAX_PAYLOAD_SIZE, audio_file, api_key)
         if not success:
-            return { "error" : f"Error downloading data from {job['input']['url']}" }
+            yield { "error" : f"Error downloading data from {job['input']['url']}" }
+            return
 
     stream_gen = transcribe_core(model, audio_file)
 
     if is_streaming:
-        return stream_gen 
-
-    result = [entry for entry in stream_gen]
-    return { 'result' : result }
+        for entry in stream_gen:
+            yield entry
+    else:
+        result = [entry for entry in stream_gen]
+        yield { 'result' : result }
 
 def transcribe_core(model, audio_file):
     print('Transcribing...')
