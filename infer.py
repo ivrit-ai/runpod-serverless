@@ -74,7 +74,7 @@ def transcribe(job):
     # Get the API key from the job input
     api_key = job['input'].get('api_key', None)
 
-    model = faster_whisper.WhisperModel(model_name, device=device)
+    model = faster_whisper.WhisperModel(model_name, device=device, compute_type='float16')
 
     d = tempfile.mkdtemp()
 

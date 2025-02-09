@@ -9,10 +9,8 @@ RUN pip install runpod
 RUN pip install torch==2.3.1
 RUN pip install faster-whisper
 
-RUN python3 -c 'import faster_whisper; m = faster_whisper.WhisperModel("ivrit-ai/faster-whisper-v2-d3-e3")'
 RUN python3 -c 'import faster_whisper; m = faster_whisper.WhisperModel("ivrit-ai/faster-whisper-v2-d4")'
-RUN python3 -c 'import faster_whisper; m = faster_whisper.WhisperModel("large-v2")'
-RUN python3 -c 'import faster_whisper; m = faster_whisper.WhisperModel("large-v3")'
+RUN python3 -c 'import faster_whisper; m = faster_whisper.WhisperModel("ivrit-ai/whisper-large-v3-turbo-ct2")'
 
 # Add your file
 ADD infer.py .
