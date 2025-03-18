@@ -24,7 +24,7 @@ It is part of the [ivrit.ai](https://ivrit.ai) non-profit project.
    - You can choose the cheapest worker (16GB GPU, $0.00016/second as of August 1st, 2024).
    - Active workers can be 0, max workers is 1 or more.
    - GPUs/worker should be set to 1.
-   - Container image should be set to **yairlifshitz/faster-whisper-v2-d4:v1.0**, or your own Docker image (instruction later on how to build this).
+   - Container image should be set to **yairlifshitz/whisper-runpod-serverless:latest**, or your own Docker image (instruction later on how to build this).
    - Container disk should have at least 20 GB.
 5. Click Deploy.
 
@@ -33,14 +33,14 @@ It is part of the [ivrit.ai](https://ivrit.ai) non-profit project.
 1. Clone this repository:
 
 ```
-git clone https://github.com/yourusername/runpod-serverless.git
+git clone https://github.com/ivrit-ai/runpod-serverless.git
 cd runpod-serverless
 ```
 
 2. Build the Docker image:
 
 ```
-docker build -t runpod-serverless .
+docker build -t whisper-runpod-serverless .
 ```
 
 3. Push the image to a public Docker repository:
@@ -54,12 +54,12 @@ b. Log in to Docker Hub from your command line:
 
 c. Tag your image with your Docker Hub username:
    ```
-   docker tag runpod-serverless yourusername/runpod-serverless:latest
+   docker tag whisper-runpod-serverless yourusername/whisper-runpod-serverless:latest
    ```
 
 d. Push the image to Docker Hub:
    ```
-   docker push yourusername/runpod-serverless:latest
+   docker push yourusername/whisper-runpod-serverless:latest
    ```
 
 4. Set up a serverless function on runpod.io using the pushed image.
@@ -74,8 +74,9 @@ Once deployed on runpod.io, you can transcribe Hebrew audio either by providing 
 import runpod
 import base64
 
-# model can be any of ivrit-ai/faster-whisper-v2-d4, large-v2, large-v3
-payload = { 'type' : 'url', 'url' : 'https://your-audio-url', 'model' : 'ivrit-ai/faster-whisper-v2-d4' }
+# 1. model: ivrit-ai/whisper-large-v3-ct2, ivrit-ai/whisper-large-v3-turbo-ct2
+# 2. engine: faster-whisper, stable-whisper
+payload = { 'type' : 'url', 'url' : 'https://your-audio-url', 'model' : 'ivrit-ai/whisper-large-v3-turbo-ct2', 'engine' : 'faster-whisper' }
 
 runpod.api_key = '<Your runpod.io API key>'
 ep = runpod.Endpoint("<endpoint key>")
@@ -91,8 +92,9 @@ import base64
 mp3_data = open('<file>.mp3', 'rb').read()
 data = base64.b64encode(mp3_data).decode('utf-8')
 
-# model can be any of ivrit-ai/faster-whisper-v2-d4, large-v2, large-v3
-payload = { 'type' : 'blob', 'data' : data, model : 'ivrit-ai/faster-whisper-v2-d4' }
+# 1. model: ivrit-ai/whisper-large-v3-ct2, ivrit-ai/whisper-large-v3-turbo-ct2
+# 2. engine: faster-whisper, stable-whisper
+payload = { 'type' : 'blob', 'data' : data, 'model' : 'ivrit-ai/whisper-large-v3-turbo-ct2', 'engine' : 'faster-whisper' }
 
 runpod.api_key = '<Your runpod.io API key>'
 ep = runpod.Endpoint("<endpoint key>")
