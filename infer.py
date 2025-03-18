@@ -1,7 +1,6 @@
 import runpod
 
 import base64
-import faster_whisper
 import tempfile
 
 import torch
@@ -62,6 +61,7 @@ def download_file(url, max_size_bytes, output_filename, api_key=None):
 
 def transcribe(job):
     datatype = job['input'].get('type', None)
+    engine = job['input'].get('engine', 'faster-whisper')
     model_name = job['input'].get('model', 'large-v2')
     is_streaming = job['input'].get('streaming', False)
 
@@ -71,10 +71,11 @@ def transcribe(job):
     if not datatype in ['blob', 'url']:
         yield { "error" : f"datatype should be 'blob' or 'url', but is {datatype} instead." }
 
+    if not engine in ['faster-whisper', 'stable-whisper']:
+        yield { "error" : f"engine should be 'faster-whsiper' or 'stable-whisper', but is {engine} instead." }
+
     # Get the API key from the job input
     api_key = job['input'].get('api_key', None)
-
-    model = faster_whisper.WhisperModel(model_name, device=device, compute_type='float16')
 
     d = tempfile.mkdtemp()
 
@@ -89,7 +90,7 @@ def transcribe(job):
             yield { "error" : f"Error downloading data from {job['input']['url']}" }
             return
 
-    stream_gen = transcribe_core(model, audio_file)
+    stream_gen = transcribe_core(engine, model_name, audio_file)
 
     if is_streaming:
         for entry in stream_gen:
@@ -98,12 +99,23 @@ def transcribe(job):
         result = [entry for entry in stream_gen]
         yield { 'result' : result }
 
-def transcribe_core(model, audio_file):
+def transcribe_core(engine, model_name, audio_file):
     print('Transcribing...')
+
+    if engine == 'faster-whisper':
+        import faster_whisper
+        model = faster_whisper.WhisperModel(model_name, device=device, compute_type='float16')
+
+        segs, _ = model.transcribe(audio_file, language='he', word_timestamps=True)
+    elif engine == 'stable-whisper':
+        import stable_whisper
+        model = stable_whisper.load_faster_whisper(model_name, device=device, compute_type='float16')
+
+        res = model.transcribe(audio_file, language='he', word_timestamps=True)
+        segs = res.segments
 
     ret = { 'segments' : [] }
 
-    segs, dummy = model.transcribe(audio_file, language='he', word_timestamps=True)
     for s in segs:
         words = []
         for w in s.words:
