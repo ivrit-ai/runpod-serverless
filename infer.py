@@ -12,6 +12,11 @@ import requests
 # Maximum data size: 200MB
 MAX_PAYLOAD_SIZE = 200 * 1024 * 1024
 
+# Global variables to track the currently loaded model
+current_model = None
+current_engine = None
+current_model_name = None
+
 def download_file(url, max_size_bytes, output_filename, api_key=None):
     """
     Download a file from a given URL with size limit and optional API key.
@@ -101,17 +106,29 @@ def transcribe(job):
 
 def transcribe_core(engine, model_name, audio_file):
     print('Transcribing...')
+    
+    global current_model, current_engine, current_model_name
+    
+    # Check if we need to load a new model
+    if current_model is None or current_engine != engine or current_model_name != model_name:
+        print(f'Loading new model: {engine} with {model_name}')
+        if engine == 'faster-whisper':
+            import faster_whisper
+            current_model = faster_whisper.WhisperModel(model_name, device=device, compute_type='float16')
+        elif engine == 'stable-whisper':
+            import stable_whisper
+            current_model = stable_whisper.load_faster_whisper(model_name, device=device, compute_type='float16')
+        
+        # Update the global tracking variables
+        current_engine = engine
+        current_model_name = model_name
+    else:
+        print(f'Reusing existing model: {engine} with {model_name}')
 
     if engine == 'faster-whisper':
-        import faster_whisper
-        model = faster_whisper.WhisperModel(model_name, device=device, compute_type='float16')
-
-        segs, _ = model.transcribe(audio_file, language='he', word_timestamps=True)
+        segs, _ = current_model.transcribe(audio_file, language='he', word_timestamps=True)
     elif engine == 'stable-whisper':
-        import stable_whisper
-        model = stable_whisper.load_faster_whisper(model_name, device=device, compute_type='float16')
-
-        res = model.transcribe(audio_file, language='he', word_timestamps=True)
+        res = current_model.transcribe(audio_file, language='he', word_timestamps=True)
         segs = res.segments
 
     ret = { 'segments' : [] }
