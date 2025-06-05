@@ -1,0 +1,32 @@
+{
+  "title": "ivrit.ai speech-to-text inference",
+  "description": "Hebrew speech-to-text based on ivrit.ai's latest Whisper model",
+  "type": "serverless",
+  "category": "audio",
+  "iconUrl": "https://transcribe.ivrit.ai/static/favicon.png",
+  "config": {
+    "runsOn": "GPU",
+    "gpuCount": 1,
+    "gpuIds": ["AMPERE_16"],
+    "containerDiskInGb": 20,
+    "presets": [
+      {
+      }
+    ],
+    "env": [
+      {
+        "key": "UNUSED_STATIC_VAR",
+        "value": "unused_static_value"
+      },
+      {
+        "key": "UNUSED_STRING_VAR",
+        "input": {
+          "name": "Unused String Input",
+          "type": "unused string",
+          "description": "A string input test",
+          "default": "new default value"
+        }
+      }
+    ]
+  }
+}

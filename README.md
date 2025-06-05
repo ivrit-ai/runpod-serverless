@@ -1,5 +1,7 @@
 # runpod-serverless
 
+[![RunPod](https://api.runpod.io/badge/ivrit-ai/runpod-serverless)](https://www.runpod.io/console/hub/ivrit-ai/runpod-serverless)
+
 A template for transcribing Hebrew audio using runpod.io serverless infrastructure.
 
 Note: if you register at [runpod.io], we'd like to ask you to consider using our [referral link](https://runpod.io/?ref=06octndf).
