@@ -1,0 +1,15 @@
+{
+  "title": "ivrit.ai speech-to-text inference",
+  "description": "Hebrew speech-to-text based on ivrit.ai's latest Whisper model",
+  "type": "serverless",
+  "category": "audio",
+  "iconUrl": "https://transcribe.ivrit.ai/static/favicon.png",
+  "config": {
+    "runsOn": "GPU",
+    "containerDiskInGb": 20,
+    "gpuIds": "AMPERE_16",
+    "gpuCount": 1,
+    "presets": [],
+    "env": []
+  }
+}
