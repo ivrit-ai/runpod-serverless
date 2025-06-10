@@ -15,17 +15,8 @@
     ],
     "env": [
       {
-        "key": "UNUSED_STATIC_VAR",
-        "value": "unused_static_value"
       },
       {
-        "key": "UNUSED_STRING_VAR",
-        "input": {
-          "name": "Unused String Input",
-          "type": "unused string",
-          "description": "A string input test",
-          "default": "new default value"
-        }
       }
     ]
   }
