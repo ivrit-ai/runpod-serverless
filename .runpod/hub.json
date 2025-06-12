@@ -6,17 +6,12 @@
   "iconUrl": "https://transcribe.ivrit.ai/static/favicon.png",
   "config": {
     "runsOn": "GPU",
+    "gpuIds": ["AMPERE_16"], 
     "gpuCount": 1,
     "containerDiskInGb": 20,
     "presets": [
-      {
-      }
     ],
     "env": [
-      {
-      },
-      {
-      }
     ]
   }
 }
