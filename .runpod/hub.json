@@ -12,7 +12,16 @@
     "presets": [
     ],
     "env": [
-        { "key": "DUMMY_KEY", "value": "Bender is great!" }
+      { "key": "UNUSED_KEY", "value": "Bender is great!" },
+      {
+        "key": "UNUSED_STRING_VAR",
+        "input": {
+          "name": "Unused String Input",
+          "type": "unused string",
+          "description": "A string input test",
+          "default": "new default value"
+        }
+      }
     ]
   }
 }
