@@ -12,6 +12,7 @@
     "presets": [
     ],
     "env": [
+        { "key": "DUMMY_KEY", "value": "Bender is great!" }
     ]
   }
 }
