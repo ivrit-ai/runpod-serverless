@@ -2,15 +2,23 @@
 
 [![RunPod](https://api.runpod.io/badge/ivrit-ai/runpod-serverless)](https://www.runpod.io/console/hub/ivrit-ai/runpod-serverless)
 
-A template for transcribing Hebrew audio using runpod.io serverless infrastructure.
+A template for quickly deploying an ivrit.ai Speech-to-text API.
 
-Note: if you register at [runpod.io], we'd like to ask you to consider using our [referral link](https://runpod.io/?ref=06octndf).
-It provides us with more credits, which we can then use to provide better services.
+Note: if you register at [runpod.io](https://runpod.io), we'd like to ask you to consider using our [referral link](https://runpod.io/?ref=06octndf).
+It provides us with credits, which we can then use to provide better services.
 
 ## Description
 
 This project provides a serverless solution for transcribing Hebrew audio files. It leverages runpod.io's infrastructure to process audio files efficiently and return transcriptions.
 It is part of the [ivrit.ai](https://ivrit.ai) non-profit project.
+
+## API: easy deployment through the Runpod hub
+
+If you simply want to use our models via an API, quick deploy is avaialble via the RunPod hub.
+
+1. Open this template on the hub by clicking [here](https://www.runpod.io/console/hub/ivrit-ai/runpod-serverless).
+2. Click the "Deploy" button and create the endpoint.
+3. Follow the instructions under the [Usage](#usage) section.
 
 ## Contents
 
