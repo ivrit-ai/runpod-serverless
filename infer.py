@@ -114,10 +114,10 @@ def transcribe_core(engine, model_name, audio_file):
         print(f'Loading new model: {engine} with {model_name}')
         if engine == 'faster-whisper':
             import faster_whisper
-            current_model = faster_whisper.WhisperModel(model_name, device=device, compute_type='float16')
+            current_model = faster_whisper.WhisperModel(model_name, device=device, compute_type='float16', local_files_only=True)
         elif engine == 'stable-whisper':
             import stable_whisper
-            current_model = stable_whisper.load_faster_whisper(model_name, device=device, compute_type='float16')
+            current_model = stable_whisper.load_faster_whisper(model_name, device=device, compute_type='float16', local_files_only=True)
         
         # Update the global tracking variables
         current_engine = engine

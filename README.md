@@ -76,44 +76,32 @@ d. Push the image to Docker Hub:
 
 ## Usage
 
-Once deployed on runpod.io, you can transcribe Hebrew audio either by providing a URL to transcribe (up to 200MB), or by uploading a file (up to 10MB).
+Once deployed on runpod.io, you can transcribe Hebrew audio either by providing a URL to transcribe (easily supports >1GB payloads, depending on Docker image's free disk space and timeout settings) or by uploading a file (up to ~5-10MB).
 
-### URL-based transcription
+### Using the endpoint
 
-```
-import runpod
-import base64
-
-# 1. model: ivrit-ai/whisper-large-v3-ct2, ivrit-ai/whisper-large-v3-turbo-ct2
-# 2. engine: faster-whisper, stable-whisper
-payload = { 'type' : 'url', 'url' : 'https://your-audio-url', 'model' : 'ivrit-ai/whisper-large-v3-turbo-ct2', 'engine' : 'faster-whisper' }
-
-runpod.api_key = '<Your runpod.io API key>'
-ep = runpod.Endpoint("<endpoint key>")
-res = ep.run_sync(payload)
-```
-
-### File upload
+Copy the infer_client.py file, then invoke transcription using it:
 
 ```
-import runpod
-import base64
+import infer_client
+import os
 
-mp3_data = open('<file>.mp3', 'rb').read()
-data = base64.b64encode(mp3_data).decode('utf-8')
+os["environ"]["RUNPOD_API_KEY"] = "<your API key>"
+os["environ"]["RUNPOD_ENDPOINT_ID"] = "<your endpoint ID>"
 
-# 1. model: ivrit-ai/whisper-large-v3-ct2, ivrit-ai/whisper-large-v3-turbo-ct2
-# 2. engine: faster-whisper, stable-whisper
-payload = { 'type' : 'blob', 'data' : data, 'model' : 'ivrit-ai/whisper-large-v3-turbo-ct2', 'engine' : 'faster-whisper' }
+# Local file transcription (up to ~5MB)
+local_segments = infer_client.transcribe("ivrit-ai/whisper-large-v3-turbo-ct2", "blob", "<your file>")
 
-runpod.api_key = '<Your runpod.io API key>'
-ep = runpod.Endpoint("<endpoint key>")
-res = ep.run_sync(payload)
+# URL-based transcription
+url_segments = infer_client.transcribe("ivrit-ai/whisper-large-v3-turbo-ct2", "url", "<your URL>")
 ```
+
+Supported models are **ivrit-ai/whisper-large-v3-ct2** and **ivrit-ai/whisper-large-v3-turbo-ct2**.
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+Patreon link: [here](https://www.patreon.com/ivrit_ai).
 
 ## License
 
