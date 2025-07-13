@@ -9,6 +9,8 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 import requests
 
+from diarization import diarization_pipeline
+
 # Maximum data size: 200MB
 MAX_PAYLOAD_SIZE = 200 * 1024 * 1024
 
@@ -69,6 +71,7 @@ def transcribe(job):
     engine = job['input'].get('engine', 'faster-whisper')
     model_name = job['input'].get('model', 'large-v2')
     is_streaming = job['input'].get('streaming', False)
+    enable_diarization = job["input"].get("diarization", False)
 
     if not datatype:
         yield { "error" : "datatype field not provided. Should be 'blob' or 'url'." }
@@ -96,6 +99,14 @@ def transcribe(job):
             return
 
     stream_gen = transcribe_core(engine, model_name, audio_file)
+    
+    if enable_diarization:
+        print("Running speaker diarization...")
+        try:
+            _ = diarization_pipeline(audio_file, device=device)  # todo - use outputs
+            print("Diarization completed successfully")
+        except Exception as e:
+            print(f"Diarization failed: {e}")
 
     if is_streaming:
         for entry in stream_gen:

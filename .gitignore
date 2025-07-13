@@ -2,3 +2,9 @@ package.json
 package-lock.json
 
 node_modules
+
+.vscode
+.venv
+__pycache__
+
+.env
