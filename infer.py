@@ -1,80 +1,13 @@
 import runpod
-
-import base64
-import tempfile
-
-import torch
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-import requests
-
-# Maximum data size: 200MB
-MAX_PAYLOAD_SIZE = 200 * 1024 * 1024
+import ivrit
 
 # Global variables to track the currently loaded model
 current_model = None
-current_engine = None
-current_model_name = None
-
-def download_file(url, max_size_bytes, output_filename, api_key=None):
-    """
-    Download a file from a given URL with size limit and optional API key.
-
-    Args:
-    url (str): The URL of the file to download.
-    max_size_bytes (int): Maximum allowed file size in bytes.
-    output_filename (str): The name of the file to save the download as.
-    api_key (str, optional): API key to be used as a bearer token.
-
-    Returns:
-    bool: True if download was successful, False otherwise.
-    """
-    try:
-        # Prepare headers
-        headers = {}
-        if api_key:
-            headers['Authorization'] = f'Bearer {api_key}'
-
-        # Send a GET request
-        response = requests.get(url, stream=True, headers=headers)
-        response.raise_for_status()  # Raises an HTTPError for bad requests
-
-        # Get the file size if possible
-        file_size = int(response.headers.get('Content-Length', 0))
-        
-        if file_size > max_size_bytes:
-            print(f"File size ({file_size} bytes) exceeds the maximum allowed size ({max_size_bytes} bytes).")
-            return False
-
-        # Download and write the file
-        downloaded_size = 0
-        with open(output_filename, 'wb') as file:
-            for chunk in response.iter_content(chunk_size=8192):
-                downloaded_size += len(chunk)
-                if downloaded_size > max_size_bytes:
-                    print(f"Download stopped: Size limit exceeded ({max_size_bytes} bytes).")
-                    return False
-                file.write(chunk)
-
-        print(f"File downloaded successfully: {output_filename}")
-        return True
-
-    except requests.RequestException as e:
-        print(f"Error downloading file: {e}")
-        return False
 
 def transcribe(job):
-    datatype = job['input'].get('type', None)
     engine = job['input'].get('engine', 'faster-whisper')
-    model_name = job['input'].get('model', 'large-v2')
+    model_name = job['input'].get('model', 'ivrit-ai/whisper-large-v3-turbo-ct2')
     is_streaming = job['input'].get('streaming', False)
-
-    if not datatype:
-        yield { "error" : "datatype field not provided. Should be 'blob' or 'url'." }
-
-    if not datatype in ['blob', 'url']:
-        yield { "error" : f"datatype should be 'blob' or 'url', but is {datatype} instead." }
 
     if not engine in ['faster-whisper', 'stable-whisper']:
         yield { "error" : f"engine should be 'faster-whsiper' or 'stable-whisper', but is {engine} instead." }
@@ -82,20 +15,17 @@ def transcribe(job):
     # Get the API key from the job input
     api_key = job['input'].get('api_key', None)
 
-    d = tempfile.mkdtemp()
+    # Extract transcribe_args from job input
+    transcribe_args = job['input'].get('transcribe_args', None)
 
-    audio_file = f'{d}/audio.mp3'
+    # Validate that transcribe_args contains either blob or url
+    if not transcribe_args:
+        yield { "error" : "transcribe_args field not provided." }
+    
+    if not ('blob' in transcribe_args or 'url' in transcribe_args):
+        yield { "error" : "transcribe_args must contain either 'blob' or 'url' field." }
 
-    if datatype == 'blob':
-        mp3_bytes = base64.b64decode(job['input']['data'])
-        open(audio_file, 'wb').write(mp3_bytes) 
-    elif datatype == 'url':
-        success = download_file(job['input']['url'], MAX_PAYLOAD_SIZE, audio_file, api_key)
-        if not success:
-            yield { "error" : f"Error downloading data from {job['input']['url']}" }
-            return
-
-    stream_gen = transcribe_core(engine, model_name, audio_file)
+    stream_gen = transcribe_core(engine, model_name, transcribe_args)
 
     if is_streaming:
         for entry in stream_gen:
@@ -104,43 +34,22 @@ def transcribe(job):
         result = [entry for entry in stream_gen]
         yield { 'result' : result }
 
-def transcribe_core(engine, model_name, audio_file):
+def transcribe_core(engine, model_name, transcribe_args):
     print('Transcribing...')
     
-    global current_model, current_engine, current_model_name
-    
-    # Check if we need to load a new model
-    if current_model is None or current_engine != engine or current_model_name != model_name:
-        print(f'Loading new model: {engine} with {model_name}')
-        if engine == 'faster-whisper':
-            import faster_whisper
-            current_model = faster_whisper.WhisperModel(model_name, device=device, compute_type='float16', local_files_only=True)
-        elif engine == 'stable-whisper':
-            import stable_whisper
-            current_model = stable_whisper.load_faster_whisper(model_name, device=device, compute_type='float16', local_files_only=True)
-        
-        # Update the global tracking variables
-        current_engine = engine
-        current_model_name = model_name
+    global current_model
+
+    different_model = (not current_model) or (current_model.engine != engine or current_model.model != model_name)
+
+    if different_model: 
+        current_model = ivrit.load_model(engine=engine, model=model_name, local_files_only=True)
     else:
         print(f'Reusing existing model: {engine} with {model_name}')
 
-    if engine == 'faster-whisper':
-        segs, _ = current_model.transcribe(audio_file, language='he', word_timestamps=True)
-    elif engine == 'stable-whisper':
-        res = current_model.transcribe(audio_file, language='he', word_timestamps=True)
-        segs = res.segments
-
-    ret = { 'segments' : [] }
+    segs = current_model.transcribe(**transcribe_args, stream=True)
 
     for s in segs:
-        words = []
-        for w in s.words:
-            words.append( { 'start' : w.start, 'end' : w.end, 'word' : w.word, 'probability' : w.probability } )
-
-        seg = { 'id' : s.id, 'seek' : s.seek, 'start' : s.start, 'end' : s.end, 'text' : s.text, 'avg_logprob' : s.avg_logprob, 'compression_ratio' : s.compression_ratio, 'no_speech_prob' : s.no_speech_prob, 'words' : words }
-
-        yield seg
+        yield s
 
 runpod.serverless.start({"handler": transcribe, "return_aggregate_stream": True})
 
