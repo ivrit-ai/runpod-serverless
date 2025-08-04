@@ -48,7 +48,10 @@ def transcribe_core(engine, model_name, transcribe_args):
     else:
         print(f'Reusing existing model: {engine} with {model_name}')
 
-    segs = current_model.transcribe(**transcribe_args, stream=True)
+    # Always stream, regardless of client side, as runpod has return size limitations
+    transcribe_args['stream'] = True
+
+    segs = current_model.transcribe(**transcribe_args)
 
     for s in segs:
         yield jsonpickle.encode(s)
