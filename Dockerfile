@@ -9,7 +9,7 @@ ENV LD_LIBRARY_PATH="/opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib:/o
 
 # Install runpod
 RUN pip install runpod
-RUN pip install ivrit==0.0.5
+RUN pip install ivrit==0.0.6
 RUN pip install jsonpickle
 
 RUN python3 -c 'import faster_whisper; m = faster_whisper.WhisperModel("ivrit-ai/whisper-large-v3-turbo-ct2")'
