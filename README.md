@@ -80,20 +80,25 @@ Once deployed on runpod.io, you can transcribe Hebrew audio either by providing 
 
 ### Using the endpoint
 
-Copy the infer_client.py file, then invoke transcription using it:
+Use the ivrit python package.
 
 ```
-import infer_client
-import os
+import ivrit
 
-os["environ"]["RUNPOD_API_KEY"] = "<your API key>"
-os["environ"]["RUNPOD_ENDPOINT_ID"] = "<your endpoint ID>"
+model = ivrit.load_model(engine="runpod", model="ivrit-ai/whisper-large-v3-turbo-ct2", api_key="<your API key>", endpoint_id="<your endpoint ID>")
 
 # Local file transcription (up to ~5MB)
-local_segments = infer_client.transcribe("ivrit-ai/whisper-large-v3-turbo-ct2", "blob", "<your file>")
+result = model.transcribe(path="<your file>", language="he")
 
 # URL-based transcription
-url_segments = infer_client.transcribe("ivrit-ai/whisper-large-v3-turbo-ct2", "url", "<your URL>")
+result = model.transcribe(url="<your URL>", language="he")
+
+# Print resulting text
+print(result['text'])
+
+# Iterate over segments
+for segment in result['segments']:
+    print(segment) 
 ```
 
 Supported models are **ivrit-ai/whisper-large-v3-ct2** and **ivrit-ai/whisper-large-v3-turbo-ct2**.
