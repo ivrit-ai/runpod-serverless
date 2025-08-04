@@ -1,5 +1,6 @@
 import runpod
 import ivrit
+import jsonpickle
 
 # Global variables to track the currently loaded model
 current_model = None
@@ -41,7 +42,8 @@ def transcribe_core(engine, model_name, transcribe_args):
 
     different_model = (not current_model) or (current_model.engine != engine or current_model.model != model_name)
 
-    if different_model: 
+    if different_model:
+        print(f'Loading new model: {engine} with {model_name}')
         current_model = ivrit.load_model(engine=engine, model=model_name, local_files_only=True)
     else:
         print(f'Reusing existing model: {engine} with {model_name}')
@@ -49,7 +51,7 @@ def transcribe_core(engine, model_name, transcribe_args):
     segs = current_model.transcribe(**transcribe_args, stream=True)
 
     for s in segs:
-        yield s
+        yield jsonpickle.encode(s)
 
 runpod.serverless.start({"handler": transcribe, "return_aggregate_stream": True})
 
