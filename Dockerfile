@@ -7,7 +7,11 @@ WORKDIR /
 # Configure LD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH="/opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib:/opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib"
 
-# Install runpod
+# Install relevant packages 
+RUN apt update
+RUN apt install -y ffmpeg
+
+# Install python packages
 RUN pip install runpod
 RUN pip install ivrit==0.0.6
 RUN pip install jsonpickle
