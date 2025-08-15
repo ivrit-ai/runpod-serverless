@@ -1,6 +1,6 @@
+import dataclasses
 import runpod
 import ivrit
-import jsonpickle
 
 # Global variables to track the currently loaded model
 current_model = None
@@ -54,7 +54,7 @@ def transcribe_core(engine, model_name, transcribe_args):
     segs = current_model.transcribe(**transcribe_args)
 
     for s in segs:
-        yield jsonpickle.encode(s)
+        yield dataclasses.asdict(s)
 
 runpod.serverless.start({"handler": transcribe, "return_aggregate_stream": True})
 
