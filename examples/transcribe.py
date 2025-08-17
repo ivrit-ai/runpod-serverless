@@ -8,6 +8,7 @@ Usage:
 import requests
 import dotenv
 import os
+from pathlib import Path
 import base64
 import json
 import time
@@ -107,7 +108,7 @@ def transcribe(audio_file_path, engine='faster-whisper', model='ivrit-ai/whisper
 
 def main():
     """Main function to transcribe the audio.opus file"""
-    audio_file = "./audio.opus"
+    audio_file = Path("./audio.opus")
     
     if not os.path.exists(audio_file):
         print(f"Error: Audio file {audio_file} not found")
@@ -115,11 +116,11 @@ def main():
     
     try:
         print(f"Transcribing {audio_file}...")
-        result = transcribe(audio_file)
+        result = transcribe(audio_file, engine='stable-whisper', model='ivrit-ai/whisper-large-v3-turbo-ct2')
         
         print("Transcription completed!")
         print("Result:")
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result, indent=2, ensure_ascii=False))
         
     except Exception as e:
         print(f"Error during transcription: {e}")
