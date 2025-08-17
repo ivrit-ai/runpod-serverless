@@ -8,6 +8,7 @@ Deployment:
     https://www.runpod.io/console/hub/ivrit-ai/runpod-serverless
 
 Usage:
+    pip install python-dotenv requests
     cd examples
     uv run transcribe.py
 """
