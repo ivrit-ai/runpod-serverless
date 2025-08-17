@@ -1,5 +1,11 @@
 """
-Transcription script that reads a local audio file and sends it to RunPod API for transcription
+Transcription script for sending local audio files to the RunPod API.
+
+Version: 2025.08.16.p2
+
+Deployment:
+    One-click deploy available at:
+    https://www.runpod.io/console/hub/ivrit-ai/runpod-serverless
 
 Usage:
     cd examples
