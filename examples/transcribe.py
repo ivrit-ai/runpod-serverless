@@ -22,8 +22,32 @@ import time
 
 dotenv.load_dotenv()
 
-API_KEY = os.getenv("RUNPOD_API_KEY")
-ENDPOINT_ID = os.getenv("RUNPOD_API_URL")
+API_KEY = os.getenv("RUNPOD_API_KEY") # Example: rpa_<your_api_key>
+API_URL = os.getenv("RUNPOD_API_URL") # Example: https://api.runpod.ai/v2/<endpoint_id>
+
+def create_payload(audio_blob, engine='faster-whisper', model='ivrit-ai/whisper-large-v3-turbo-ct2', streaming=False):
+    """
+    Create the payload for the RunPod API request
+    
+    Args:
+        audio_blob (str): Base64 encoded audio data
+        engine (str): Transcription engine ('faster-whisper' or 'stable-whisper')
+        model (str): Model name to use for transcription
+        streaming (bool): Whether to use streaming mode
+    
+    Returns:
+        dict: Formatted payload for RunPod API
+    """
+    return {
+        "input": {
+            "engine": engine,
+            "model": model,
+            "streaming": streaming,
+            "transcribe_args": {
+                "blob": audio_blob,
+            },
+        }
+    }
 
 def transcribe(audio_file_path, engine='faster-whisper', model='ivrit-ai/whisper-large-v3-turbo-ct2', streaming=False):
     """
@@ -41,7 +65,7 @@ def transcribe(audio_file_path, engine='faster-whisper', model='ivrit-ai/whisper
     if not API_KEY:
         raise ValueError("RUNPOD_API_KEY environment variable is required")
     
-    if not ENDPOINT_ID:
+    if not API_URL:
         raise ValueError("RUNPOD_API_URL environment variable is required")
     
     # Read the audio file and encode it as base64
@@ -49,17 +73,8 @@ def transcribe(audio_file_path, engine='faster-whisper', model='ivrit-ai/whisper
         audio_data = audio_file.read()
         audio_blob = base64.b64encode(audio_data).decode('utf-8')
     
-    # Prepare the request payload
-    payload = {
-        "input": {
-            "engine": engine,
-            "model": model,
-            "streaming": streaming,
-            "transcribe_args": {
-                "blob": audio_blob,
-            },
-        }
-    }
+    # Create the request payload
+    payload = create_payload(audio_blob, engine, model, streaming)
     
     
     # Make the API request
@@ -69,7 +84,7 @@ def transcribe(audio_file_path, engine='faster-whisper', model='ivrit-ai/whisper
     }
     
     response = requests.post(
-        f"{ENDPOINT_ID}/run",
+        f"{API_URL}/run",
         headers=headers,
         json=payload
     )
@@ -91,7 +106,7 @@ def transcribe(audio_file_path, engine='faster-whisper', model='ivrit-ai/whisper
         time.sleep(2)  # Wait 2 seconds between polls
         
         status_response = requests.get(
-            f"{ENDPOINT_ID}/status/{job_id}",
+            f"{API_URL}/status/{job_id}",
             headers=headers
         )
         
