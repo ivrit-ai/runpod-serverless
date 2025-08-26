@@ -48,10 +48,15 @@ def transcribe_core(engine, model_name, transcribe_args):
     else:
         print(f'Reusing existing model: {engine} with {model_name}')
 
-    # Always stream, regardless of client side, as runpod has return size limitations
-    transcribe_args['stream'] = True
+    diarize = transcribe_args.get('diarize', False)
 
-    segs = current_model.transcribe(**transcribe_args)
+    if diarize:
+        res = current_model.transcribe(**transcribe_args)
+
+        segs = res['segments']
+    else:
+        transcribe_args['stream'] = True 
+        segs = current_model.transcribe(**transcribe_args)
 
     for s in segs:
         yield dataclasses.asdict(s)
