@@ -13,11 +13,14 @@ current_model = None
 
 def transcribe(job):
     engine = job['input'].get('engine', 'faster-whisper')
-    model_name = job['input'].get('model', 'ivrit-ai/whisper-large-v3-turbo-ct2')
+    model_name = job['input'].get('model', None)
     is_streaming = job['input'].get('streaming', False)
 
     if not engine in ['faster-whisper', 'stable-whisper']:
-        yield { "error" : f"engine should be 'faster-whsiper' or 'stable-whisper', but is {engine} instead." }
+        yield { "error" : f"engine should be 'faster-whisper' or 'stable-whisper', but is {engine} instead." }
+
+    if not model_name:
+        yield { "error" : "Model not provided." }
 
     # Get the API key from the job input
     api_key = job['input'].get('api_key', None)
