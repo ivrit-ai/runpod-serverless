@@ -38,42 +38,6 @@ If you simply want to use our models via an API, quick deploy is avaialble via t
    - Container disk should have at least 20 GB.
 5. Click Deploy.
 
-## Building your own Docker image
-
-1. Clone this repository:
-
-```
-git clone https://github.com/ivrit-ai/runpod-serverless.git
-cd runpod-serverless
-```
-
-2. Build the Docker image:
-
-```
-docker build -t whisper-runpod-serverless .
-```
-
-3. Push the image to a public Docker repository:
-
-a. If you haven't already, create an account on [Docker Hub](https://hub.docker.com/).
-
-b. Log in to Docker Hub from your command line:
-   ```
-   docker login
-   ```
-
-c. Tag your image with your Docker Hub username:
-   ```
-   docker tag whisper-runpod-serverless yourusername/whisper-runpod-serverless:latest
-   ```
-
-d. Push the image to Docker Hub:
-   ```
-   docker push yourusername/whisper-runpod-serverless:latest
-   ```
-
-4. Set up a serverless function on runpod.io using the pushed image.
-
 ## Usage
 
 Once deployed on runpod.io, you can transcribe Hebrew audio either by providing a URL to transcribe (easily supports >1GB payloads, depending on Docker image's free disk space and timeout settings) or by uploading a file (up to ~5-10MB).
@@ -102,6 +66,50 @@ for segment in result['segments']:
 ```
 
 Supported models are **ivrit-ai/whisper-large-v3-ct2** and **ivrit-ai/whisper-large-v3-turbo-ct2**.
+
+#### Output Options
+
+The `transcribe()` method accepts an `output_options` parameter (dictionary) to control the detail level of the output:
+
+```
+result = model.transcribe(
+    path="<your file>", 
+    language="he",
+    output_options={
+        "word_timestamps": False,  # Disable word-level timestamps
+        "extra_data": False         # Disable extra metadata
+    }
+)
+```
+
+Setting both `word_timestamps` and `extra_data` to `False` significantly reduces the output length, which is important when using non-streaming mode as it minimizes response payload size and improves performance.
+
+#### Diarization (Speaker Identification)
+
+For diarization (identifying different speakers), use the `stable-whisper` core engine:
+
+```
+import ivrit
+
+model = ivrit.load_model(
+    engine="runpod", 
+    model="ivrit-ai/whisper-large-v3-turbo-ct2", 
+    api_key="<your API key>", 
+    endpoint_id="<your endpoint ID>",
+    core_engine="stable-whisper"
+)
+
+# Transcribe with diarization enabled
+result = model.transcribe(
+    path="<your file>", 
+    language="he",
+    diarize=True
+)
+
+# Results will include speaker labels in segments
+for segment in result['segments']:
+    print(f"Speakers {segment.speakers}: {segment['text']}")
+```
 
 ## Contributing
 
