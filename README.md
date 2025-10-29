@@ -103,6 +103,125 @@ for segment in result['segments']:
 
 Supported models are **ivrit-ai/whisper-large-v3-ct2** and **ivrit-ai/whisper-large-v3-turbo-ct2**.
 
+### Webhook Notifications
+
+The endpoint supports webhook notifications to track transcription progress. Webhooks are sent at three key points:
+
+1. **When transcription starts** - Status: `transcribing`
+2. **When transcription completes** - Status: `completed` (includes full transcription)
+3. **When an error occurs** - Status: `transcription_failed` or `error` (includes error message)
+
+#### Using Webhooks
+
+To enable webhooks, include `webhook_url` and `recording_id` in your job input:
+
+```python
+import ivrit
+
+model = ivrit.load_model(
+    engine="runpod", 
+    model="ivrit-ai/whisper-large-v3-turbo-ct2", 
+    api_key="<your API key>", 
+    endpoint_id="<your endpoint ID>"
+)
+
+# Transcribe with webhook notifications
+result = model.transcribe(
+    path="<your file>",
+    language="he",
+    webhook_url="https://your-backend.com/api/webhook",
+    recording_id="unique-recording-id-123"
+)
+```
+
+#### Webhook Payload Format
+
+Your webhook endpoint will receive POST requests with JSON payloads:
+
+**Transcription Started:**
+```json
+{
+  "recording_id": "unique-recording-id-123",
+  "status": "transcribing",
+  "timestamp": null
+}
+```
+
+**Transcription Completed:**
+```json
+{
+  "recording_id": "unique-recording-id-123",
+  "status": "completed",
+  "transcription": [
+    {
+      "start": 0.0,
+      "end": 2.5,
+      "text": "transcribed text here",
+      ...
+    }
+  ],
+  "timestamp": null
+}
+```
+
+**Transcription Failed:**
+```json
+{
+  "recording_id": "unique-recording-id-123",
+  "status": "transcription_failed",
+  "error": "error message here",
+  "timestamp": null
+}
+```
+
+The webhook has a 10-second timeout and errors are logged but won't interrupt the transcription process.
+
+#### Webhook Security
+
+For secure webhook communication, you can set a `WEBHOOK_SECRET` environment variable in your RunPod endpoint configuration. When configured, all webhook requests will include an HMAC-SHA256 signature in the `X-Webhook-Signature` header.
+
+**Setting up the webhook secret:**
+
+1. In your RunPod endpoint settings, add an environment variable:
+   - Name: `WEBHOOK_SECRET`
+   - Value: Your secret key (e.g., a randomly generated string)
+
+2. In your webhook endpoint, verify the signature:
+
+```python
+import hmac
+import hashlib
+import json
+
+def verify_webhook_signature(payload, signature, secret):
+    """Verify the webhook signature"""
+    payload_str = json.dumps(payload, sort_keys=True)
+    expected_signature = hmac.new(
+        secret.encode('utf-8'),
+        payload_str.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(signature, expected_signature)
+
+# In your webhook handler
+@app.post("/api/webhook")
+async def webhook_handler(request):
+    signature = request.headers.get('X-Webhook-Signature')
+    payload = await request.json()
+    
+    if signature:
+        secret = os.environ.get('WEBHOOK_SECRET')
+        if not verify_webhook_signature(payload, signature, secret):
+            return {"error": "Invalid signature"}, 401
+    
+    # Process the webhook
+    recording_id = payload['recording_id']
+    status = payload['status']
+    # ... handle webhook
+```
+
+**Note:** If `WEBHOOK_SECRET` is not set, webhooks will be sent without signatures (less secure but still functional).
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
